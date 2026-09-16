@@ -1,19 +1,35 @@
-name: Gerar APK do Topaz Mobile
+name: Build Topaz Mobile APK
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "TopazMobile_Corrigido_Final.zip"
-      - ".github/workflows/main.yml"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar arquivos do repositorio
+      - name: Baixar projeto
         uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Android
+        uses: android-actions/setup-android@v4
+
+      - name: Instalar Android SDK
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
 
       - name: Preparar projeto Topaz
         run: |
@@ -22,32 +38,16 @@ jobs:
           cp -r temp/TopazMobileFinal/. .
           rm -rf temp
 
-      - name: Configurar Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
+          sed -i 's/parent="android:style\/Theme.Material.NoActionBar"/parent="Theme.AppCompat.NoActionBar"/' app/src/main/res/values/styles.xml
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: ""
+      - name: Dar permissão ao Gradle
+        run: chmod +x gradlew
 
-      - name: Instalar Android SDK 35
+      - name: Gerar APK Debug
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Instalar Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.11.1"
-
-      - name: Compilar APK assinado
-        run: |
-          gradle :app:assembleDebug --no-daemon
-
-      - name: Disponibilizar APK
+      - name: Enviar APK
         uses: actions/upload-artifact@v4
         with:
           name: TopazMobile-APK
