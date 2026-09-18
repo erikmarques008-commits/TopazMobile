@@ -38,14 +38,13 @@ jobs:
           cp -r temp/TopazMobileFinal/. .
           rm -rf temp
 
-          sed -i 's/parent="android:style\/Theme.Material.NoActionBar"/parent="Theme.AppCompat.NoActionBar"/' app/src/main/res/values/styles.xml
-
-      - name: Dar permissão ao Gradle
-        run: chmod +x gradlew
+          if [ -f app/src/main/res/values/styles.xml ]; then
+            sed -i 's/parent="android:style\/Theme.Material.NoActionBar"/parent="Theme.AppCompat.NoActionBar"/' app/src/main/res/values/styles.xml
+          fi
 
       - name: Gerar APK Debug
         run: |
-          ./gradlew :app:assembleDebug --no-daemon
+          gradle :app:assembleDebug --no-daemon
 
       - name: Enviar APK
         uses: actions/upload-artifact@v4
