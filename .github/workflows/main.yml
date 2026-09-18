@@ -39,15 +39,13 @@ jobs:
         run: |
           rm -rf temp
           unzip -q TopazMobile_Corrigido_Final.zip -d temp
-
           cp -r temp/TopazMobileFinal/. .
-
           rm -rf temp
 
-      - name: Corrigir tema
+      - name: Garantir tema Android
         run: |
           if [ -f app/src/main/res/values/styles.xml ]; then
-            sed -i 's/parent="android:style\/Theme.Material.NoActionBar"/parent="Theme.AppCompat.NoActionBar"/' app/src/main/res/values/styles.xml
+            sed -i 's/parent="Theme.AppCompat.NoActionBar"/parent="android:style\/Theme.Material.NoActionBar"/' app/src/main/res/values/styles.xml
           fi
 
       - name: Gerar APK Debug
