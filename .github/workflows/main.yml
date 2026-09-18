@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar projeto
+      - name: Baixar arquivos
         uses: actions/checkout@v4
 
       - name: Configurar Java 17
@@ -26,25 +26,22 @@ jobs:
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.0"
 
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.11.1'
+      - name: Baixar Gradle 8.11.1
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+          unzip -q gradle-8.11.1-bin.zip
+          chmod +x gradle-8.11.1/bin/gradle
 
-      - name: Preparar projeto Topaz
+      - name: Preparar projeto
         run: |
           rm -rf temp
           unzip -q TopazMobile_Corrigido_Final.zip -d temp
           cp -r temp/TopazMobileFinal/. .
           rm -rf temp
 
-          if [ -f app/src/main/res/values/styles.xml ]; then
-            sed -i 's/parent="android:style\/Theme.Material.NoActionBar"/parent="Theme.AppCompat.NoActionBar"/' app/src/main/res/values/styles.xml
-          fi
-
-      - name: Gerar APK Debug
+      - name: Compilar APK
         run: |
-          gradle :app:assembleDebug --no-daemon
+          ./gradle-8.11.1/bin/gradle :app:assembleDebug --no-daemon
 
       - name: Enviar APK
         uses: actions/upload-artifact@v4
