@@ -1,61 +1,71 @@
-name: Build Topaz Mobile APK
+name: Gerar APK do Topaz Mobile Offline
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
+    permissions:
+      contents: read
 
-      - name: Baixar arquivos
+    steps:
+      - name: Baixar código
         uses: actions/checkout@v4
+
+      - name: Baixar projeto da Release v1.3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf project
+          mkdir project
+
+          gh release download v1.3 \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "TopazMobile_Offline.zip" \
+            --dir /tmp \
+            --clobber
+
+          unzip -q /tmp/TopazMobile_Offline.zip -d project
+
+          if [ -d project/TopazMobileFinal ]; then
+            shopt -s dotglob
+            mv project/TopazMobileFinal/* project/
+            rmdir project/TopazMobileFinal
+          fi
+
+          test -f project/settings.gradle.kts
+          test -f project/app/src/main/assets/Real-ESRGAN-x4plus.onnx
+
+          ls -lh project/app/src/main/assets/Real-ESRGAN-x4plus.onnx
 
       - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Configurar Android
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
-      - name: Instalar Android SDK
+      - name: Instalar Android SDK 35
         run: |
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-35"
-          sdkmanager "build-tools;35.0.0"
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.11.1'
+          gradle-version: "8.11.1"
 
-      - name: Preparar projeto Topaz
-        run: |
-          rm -rf temp
-          unzip -q TopazMobile_v1.2.zip -d temp
-
-          cp -r temp/TopazMobileFinal/. .
-
-          rm -rf temp
-
-      - name: Garantir tema Android
-        run: |
-          if [ -f app/src/main/res/values/styles.xml ]; then
-            sed -i 's/parent="Theme.AppCompat.NoActionBar"/parent="android:style\/Theme.Material.NoActionBar"/' app/src/main/res/values/styles.xml
-          fi
-
-      - name: Gerar APK Debug
+      - name: Compilar APK
+        working-directory: project
         run: |
           gradle :app:assembleDebug --no-daemon
 
-      - name: Enviar APK
+      - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
-          name: TopazMobile-APK
-          path: app/build/outputs/apk/debug/*.apk
+          name: TopazMobile-Offline-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
