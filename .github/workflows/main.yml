@@ -18,13 +18,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download v1.3 \
+          gh release download V1.3 \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "TopazMobile_Offline.zip" \
             --dir /tmp
 
           rm -rf project
           mkdir project
+
           unzip -q /tmp/TopazMobile_Offline.zip -d project
 
           echo "Arquivos encontrados:"
@@ -33,7 +34,7 @@ jobs:
       - name: Encontrar projeto Android
         run: |
           PROJECT=$(find project -name settings.gradle.kts -print -quit | xargs dirname)
-          echo "PROJECT=$PROJECT" >> $GITHUB_ENV
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
 
       - name: Verificar modelo IA
         run: |
