@@ -38,8 +38,10 @@ jobs:
       - name: Preparar projeto Topaz
         run: |
           rm -rf temp
-          unzip -q TopazMobile_Corrigido_Final.zip -d temp
+          unzip -q TopazMobile_v1.2.zip -d temp
+
           cp -r temp/TopazMobileFinal/. .
+
           rm -rf temp
 
       - name: Garantir tema Android
